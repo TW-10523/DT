@@ -1,0 +1,13 @@
+fastapi
+uvicorn
+chromadb
+PyPDF2
+python-pptx
+python-docx
+jaconv
+transformers
+torch
+pydantic
+pydantic-settings
+pytest
+python-multipart
