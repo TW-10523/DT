@@ -1,6 +1,6 @@
 fastapi
 uvicorn
-chromadb
+psycopg2-binary
 PyPDF2
 python-pptx
 python-docx
@@ -11,3 +11,8 @@ pydantic
 pydantic-settings
 pytest
 python-multipart
+accelerate
+huggingface_hub
+sentencepiece
+pgvector
+python-dotenv
