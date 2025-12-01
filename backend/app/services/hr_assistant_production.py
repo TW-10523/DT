@@ -73,17 +73,23 @@ class ProductionHRAssistantService:
                 logger.info("Redis cache initialized")
             
             # Initialize services (would be actual service instances in production)
-            from services.retriever_production import ProductionRetrieverService
-            from services.translator_production import ProductionTranslatorService
-            from services.llm_production import ProductionLLMService
+            from app.services.retriever_production import ProductionRetrieverService
+            from app.services.translator_production import ProductionTranslatorService
+            from app.services.llm_production import ProductionLLMService
             
             self.retriever_service = ProductionRetrieverService()
             self.translator_service = ProductionTranslatorService()
             self.llm_service = ProductionLLMService()
-            
-            await self.retriever_service.initialize()
-            await self.translator_service.initialize()
-            await self.llm_service.initialize()
+
+            if hasattr(self.retriever_service, "initialize"):
+                await self.retriever_service.initialize()
+            if hasattr(self.translator_service, "initialize"):
+                # keep optional init for translator
+                init = getattr(self.translator_service, "initialize")
+                if asyncio.iscoroutinefunction(init):
+                    await init()
+            if hasattr(self.llm_service, "initialize"):
+                await self.llm_service.initialize()
             
             self.initialized = True
             logger.info("HR Assistant Service initialized successfully")
@@ -91,20 +97,26 @@ class ProductionHRAssistantService:
         except Exception as e:
             logger.error(f"Failed to initialize HR Assistant: {str(e)}")
             raise
+            
     
     async def close(self):
         """Cleanup resources"""
-        if self.redis_client:
-            await self.redis_client.close()
+        try:
+            if self.redis_client:
+                await self.redis_client.close()
+        except Exception:
+            logger.exception("Error closing redis client")
         
-        if self.retriever_service:
-            await self.retriever_service.close()
-        
-        if self.translator_service:
-            await self.translator_service.close()
-        
-        if self.llm_service:
-            await self.llm_service.close()
+        for svc in (self.retriever_service, self.translator_service, self.llm_service):
+            if svc and hasattr(svc, "close"):
+                try:
+                    maybe = getattr(svc, "close")
+                    if asyncio.iscoroutinefunction(maybe):
+                        await maybe()
+                    else:
+                        maybe()
+                except Exception:
+                    logger.exception("Error closing service %s", svc)
         
         logger.info("HR Assistant Service closed")
     
@@ -173,7 +185,10 @@ class ProductionHRAssistantService:
                     confidence_histogram.observe(response['metadata']['confidence'])
                     
                     # Log for analytics
-                    await self._log_query_analytics(query, response, user_id)
+                    try:
+                        await self._log_query_analytics(query, response, user_id)
+                    except Exception:
+                        logger.exception("Failed logging analytics")
                     
                     return response
                     

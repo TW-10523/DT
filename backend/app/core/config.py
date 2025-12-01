@@ -74,6 +74,26 @@ class settings(BaseSettings):
     REDIS_POOL_SIZE: int = 10
     CACHE_TTL_SECONDS: int = 3600
     CACHE_ENABLED: bool = True
+
+     # Ollama (local model host) -- for on-prem / GPU server models
+    OLLAMA_HOST: str = "localhost"         
+    OLLAMA_PORT: int = 11434               
+    OLLAMA_PROTOCOL: str = "http"          
+    OLLAMA_API_KEY: Optional[str] = None   
+    OLLAMA_TIMEOUT_SECONDS: int = 60
+    OLLAMA_USE_SSL: bool = False
+
+     # Primary LLM Model (Ollama)
+    PRIMARY_LLM_NAME: str = "gpt-oss:120b"
+    PRIMARY_LLM_ENDPOINT: str = "http://localhost:11434"  # default Ollama port
+    PRIMARY_LLM_TEMPERATURE: float = 0.1
+    PRIMARY_LLM_MAX_TOKENS: int = 4096
+
+    # Support / Router Model (Ollama)
+    SUPPORT_LLM_NAME: str = "qwen2.5vl:7b"
+    SUPPORT_LLM_ENDPOINT: str = "http://localhost:11434"
+    SUPPORT_LLM_TEMPERATURE: float = 0.0
+    SUPPORT_LLM_MAX_TOKENS: int = 2048
     
     # LLM Service
     LLM_ENDPOINT: str = "http://localhost:8080"
@@ -86,13 +106,12 @@ class settings(BaseSettings):
     LLM_RETRY_DELAY: float = 1.0
     
     # Translation Service
-    TRANSLATION_PROVIDER: str = "deepl"  # deepl, google, azure, custom
-    TRANSLATION_API_KEY: Optional[str] = None
-    TRANSLATION_ENDPOINT: Optional[str] = None
+    TRANSLATION_MODEL_NAME: str = "qwen2.5vl:7b"
+    TRANSLATION_USE_LLM: bool = True
     TRANSLATION_CACHE_ENABLED: bool = True
     TRANSLATION_MAX_CACHE_SIZE: int = 10000
     TRANSLATION_TIMEOUT_SECONDS: int = 10
-    
+        
     # Embedding Service
     EMBEDDING_MODEL: str = "BAAI/bge-m3"
     EMBEDDING_DIMENSION: int = 1024
@@ -200,11 +219,15 @@ def validate_settings():
         if settings.DEBUG:
             errors.append("DEBUG must be False in production")
         
-        if not settings.LLM_API_KEY:
-            errors.append("LLM_API_KEY is required in production")
-        
-        if settings.TRANSLATION_PROVIDER != "custom" and not settings.TRANSLATION_API_KEY:
-            errors.append("TRANSLATION_API_KEY is required for external providers")
+        if settings.PRIMARY_LLM_NAME == "":
+             errors.append("PRIMARY_LLM_NAME must be set")
+
+        if settings.SUPPORT_LLM_NAME == "":
+            errors.append("SUPPORT_LLM_NAME must be set")
+
+    # If translation uses LLM
+    if settings.TRANSLATION_USE_LLM and not settings.TRANSLATION_MODEL_NAME:
+        errors.append("TRANSLATION_MODEL_NAME must be defined if TRANSLATION_USE_LLM=True")
     
     # Check Redis if caching is enabled
     if settings.CACHE_ENABLED and not settings.REDIS_URL:
