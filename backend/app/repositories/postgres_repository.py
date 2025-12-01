@@ -1,9 +1,9 @@
 # repositories/postgres_repository.py
 from sqlalchemy import text
 from sqlalchemy.orm import Session
-from core.db import Document, Chunk, Embedding
-from core.db import Base
-from core.config import settings
+from app.models.document import Document, Chunk, Embedding
+from app.models.document import Base
+from app.core.config import settings
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 

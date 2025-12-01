@@ -1,0 +1,76 @@
+version: '3.8'
+
+# Minimal test stack for local development
+services:
+  # PostgreSQL with pgvector
+  postgres-test:
+    image: pgvector/pgvector:pg16
+    container_name: hr_postgres_test
+    environment:
+      POSTGRES_DB: hrdb_test
+      POSTGRES_USER: hruser
+      POSTGRES_PASSWORD: testpass
+      POSTGRES_HOST_AUTH_METHOD: trust
+    volumes:
+      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
+    ports:
+      - "5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hruser -d hrdb_test"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Redis for caching
+  redis-test:
+    image: redis:7-alpine
+    container_name: hr_redis_test
+    command: redis-server --appendonly yes
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # Mock LLM Service
+  mock-llm:
+    image: python:3.11-slim
+    container_name: hr_mock_llm
+    working_dir: /app
+    volumes:
+      - ./backend/test/mock_services:/app
+    command: >
+      sh -c "pip install fastapi uvicorn &&
+             python -c '
+      from fastapi import FastAPI
+      import random
+      app = FastAPI()
+      
+      @app.post(\"/generate\")
+      async def generate(request: dict):
+          lines = [
+              \"Employees receive standard benefits according to company policy.\",
+              \"Details vary based on employment type and tenure.\",
+              \"Please consult HR documentation for specific information.\",
+              \"Additional support is available through the HR portal.\"
+          ]
+          return {\"text\": \"\\n\".join(lines)}
+      
+      @app.get(\"/health\")
+      async def health():
+          return {\"status\": \"ok\"}
+      ' > mock_llm.py &&
+      uvicorn mock_llm:app --host 0.0.0.0 --port 8080"
+    ports:
+      - "8080:8080"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+networks:
+  default:
+    name: hr_test_network

@@ -1,5 +1,5 @@
 # app/models/inference.py
-from ..models.model_loader import load_model
+from app.models.model_loader import load_model
 import torch
 
 _model, _tokenizer = None, None

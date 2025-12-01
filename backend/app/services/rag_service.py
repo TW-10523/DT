@@ -1,6 +1,6 @@
 # app/services/rag_service.py
-from repositories.postgres_repository import PostgresRepository
-from backend.app.services.inference import generate
+from app.repositories.postgres_repository import PostgresRepository
+from app.services.inference import generate
 
 repo = PostgresRepository()  # reuse your repo
 

@@ -1,7 +1,7 @@
 # utils/search_pg.py
-from core.logging import logger
-from services.embedder import process_text, embed_text
-from repositories.postgres_repository import PostgresRepository
+from app.core.logging import logger
+from app.services.embedder import process_text, embed_text
+from app.repositories.postgres_repository import PostgresRepository
 
 repo = PostgresRepository()
 

@@ -1,5 +1,5 @@
 from transformers import AutoTokenizer, AutoModel
-from core.config import settings
+from app.core.config import settings
 import torch
 import jaconv
 

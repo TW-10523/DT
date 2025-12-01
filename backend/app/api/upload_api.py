@@ -4,8 +4,7 @@
 
 from fastapi import APIRouter, File, UploadFile, HTTPException, Depends
 from pydantic import BaseModel
-from services.document_service import ingest_document  # REUSED: implement/adapted from aviary
-from core.db import get_db  # NEW: DB dependency for Postgres
+from app.core.db import get_async_db  # NEW: DB dependency for Postgres
 
 router = APIRouter()
 
@@ -14,7 +13,7 @@ class UploadResponse(BaseModel):
     message: str
 
 @router.post("/", response_model=UploadResponse)
-async def upload_file(file: UploadFile = File(...), db=Depends(get_db)):
+async def upload_file(file: UploadFile = File(...), db=Depends(get_async_db)):
     """
     Upload a PDF/DOCX/TXT -> extract text -> chunk -> embed -> store in Postgres+pgvector.
     REUSE: document text extraction + embedding functions from aviary (services.document_service)
