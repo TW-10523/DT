@@ -192,3 +192,9 @@ else
 fi
 
 exit $TEST_RESULT
+
+
+
+
+TRY THIS 
+https://stackblitz.com/edit/nuxt-starter-zqs6pfb4?file=README.md
