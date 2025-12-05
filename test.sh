@@ -197,4 +197,4 @@ exit $TEST_RESULT
 
 
 TRY THIS 
-https://stackblitz.com/edit/nuxt-starter-zqs6pfb4?file=README.md
+https://stackblitz.com/edit/sb1-sykd2ekb?file=src%2Fcomponents%2FHomePage.tsx
